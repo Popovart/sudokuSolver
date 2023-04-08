@@ -63,29 +63,15 @@ set<int> searchWithoutUnique(vector<vector<int>> sudokuMap, pair<int,int> pos, p
     }
     set_intersection(colNumbers.begin(), colNumbers.end(), rowNumbers.begin(), rowNumbers.end(), inserter(possibleNumbers, possibleNumbers.begin()));
     
-    
-    
-    //cout << usefullCenterOfsquare.first << "," << usefullCenterOfsquare.second << endl;
+    //searching in squares
     set<int> squareNumbers = {1,2,3,4,5,6,7,8,9};
     for(int i = 0; i < 3; i++){
         for(int j = 0; j < 3; j++){
-            //cout << sudokuMap[usefullCenterOfsquare.first-1+i][usefullCenterOfsquare.second-1+j] << " ";
             squareNumbers.erase(sudokuMap[usefullCenterOfsquare.first-1+i][usefullCenterOfsquare.second-1+j]);
         }
-        //cout << endl;
     }
     set<int> result;
     set_intersection(squareNumbers.begin(), squareNumbers.end(), possibleNumbers.begin(), possibleNumbers.end(), inserter(result, result.begin()));
-
-    
-
-
-//    for (int val : result) {
-//        cout << val << " ";
-//    }
-//    cout << endl;
-    
-    
     
     
     return result;
@@ -118,23 +104,23 @@ set<int> findPossibleNumbers(vector<vector<int>> sudokuMap, pair<int,int> pos){
     set<int> result = searchWithoutUnique(sudokuMap, pos, usefullCenterOfsquare);
     
     for (int number : result) {
-        // является ли число уникальным для этого квадрата
+        // Initially, we assume that the number is unique for the current square.
         int uniqueInSquare = true;
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
                 int x = usefullCenterOfsquare.first - 1 + i;
                 int y = usefullCenterOfsquare.second - 1 + j;
-                //если позиция итерируемого элемента не равна позиции элемента для которого проверка проводится и в этой позиции 0
+                //If the position of the iterated element isn't equal to the position of the element for which the check is being performed, and there is a 0 at this position.
                 if (!(x == pos.first && y == pos.second) && sudokuMap[x][y] == 0) {
                     set<int> otherPossibleNumbers = searchWithoutUnique(sudokuMap, {x, y}, usefullCenterOfsquare);
-                    // Если это множество других возможных чисел содержит текущее число number, это означает, что оно не уникально для данного квадрата
+                    //if this subset of otherPossibleNumbers contain current value of variable number, it means that number is not unique for current square
                     if (otherPossibleNumbers.count(number) > 0) {
                         uniqueInSquare = false;
                         break;
                     }
                 }
             }
-            // если uniqueInSquare все еще true, тогда оно уникально для текущего квадрата
+            // if uniqueInSquare is still true, it means that variable number is unique for current square
             if (!uniqueInSquare) {
                 break;
             }
@@ -151,7 +137,7 @@ set<int> findPossibleNumbers(vector<vector<int>> sudokuMap, pair<int,int> pos){
 
 
 
-
+//adding number to the sudoku map
 void updateSukokuMap(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<int>>> possibleNumbers){
     for (pair<pair<int,int>, set<int> > val : possibleNumbers) {
         if(val.second.size() == 1){
@@ -159,10 +145,11 @@ void updateSukokuMap(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, se
         }
     }
 };
-//lol
+
+//checking if sukoku is valid
 bool isSudokuValid(const vector<vector<int>> &sudokuMap) {
     for (int i = 0; i < 9; ++i) {
-        set<int> row, col, box;
+        set<int> row, col, square;
         for (int j = 0; j < 9; ++j) {
             if (sudokuMap[i][j] != 0) {
                 if (row.count(sudokuMap[i][j])) {
@@ -177,13 +164,13 @@ bool isSudokuValid(const vector<vector<int>> &sudokuMap) {
                 col.insert(sudokuMap[j][i]);
             }
 
-            int boxRow = (i / 3) * 3 + j / 3;
-            int boxCol = (i % 3) * 3 + j % 3;
-            if (sudokuMap[boxRow][boxCol] != 0) {
-                if (box.count(sudokuMap[boxRow][boxCol])) {
+            int squareRow = (i / 3) * 3 + j / 3;
+            int squareCol = (i % 3) * 3 + j % 3;
+            if (sudokuMap[squareRow][squareCol] != 0) {
+                if (square.count(sudokuMap[squareRow][squareCol])) {
                     return false;
                 }
-                box.insert(sudokuMap[boxRow][boxCol]);
+                square.insert(sudokuMap[squareRow][squareCol]);
             }
         }
     }
@@ -219,8 +206,6 @@ bool zeros(vector<vector<int>> sudokuMap){
     return false;
 }
 
-
-
 bool solveSudoku(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<int> >> possibleNumbers){
     list<pair<pair<int,int>, set<int> >> tempPossibleNumbers;
     
@@ -237,12 +222,6 @@ bool solveSudoku(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<in
         return true;
     }
     
-    //судоку имеет решение?
-//    if(tempPossibleNumbers.empty()){
-//        return false;
-//    }
-    
-
     if (nothingChanged(tempPossibleNumbers, possibleNumbers)) {
         bool foundSolution = false;
         for (pair<pair<int,int>, set<int> > val : tempPossibleNumbers) {
@@ -264,26 +243,18 @@ bool solveSudoku(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<in
         }
         return foundSolution;
     }
-
-//    for (pair<pair<int,int>, set<int> > val : possibleNumbers) {
-//        cout << "[" <<val.first.first << "," << val.first.second << "] = ";
-//        for(int i : val.second){
-//            cout << i << " ";
-//        }
-//        cout << endl;
-//    }
     
     
-    cout << "--------------до updateSukokuMap------------" << endl;
-    printMatrix(sudokuMap);
-    cout << "__________________________" << endl;
+//    cout << "--------------до updateSukokuMap------------" << endl;
+    //printMatrix(sudokuMap);
+//    cout << "__________________________" << endl;
     updateSukokuMap(sudokuMap, tempPossibleNumbers);
     if(!isSudokuValid(sudokuMap)){
         return false;
     }
-    cout << "---------- после updateSukokuMap----------------" << endl;
-    printMatrix(sudokuMap);
-    cout << "__________________________" << endl;
+//    cout << "---------- после updateSukokuMap----------------" << endl;
+//    printMatrix(sudokuMap);
+//    cout << "__________________________" << endl;
     
     return solveSudoku(sudokuMap, tempPossibleNumbers);
     
@@ -295,12 +266,11 @@ int main(int argc, const char * argv[]) {
     printMatrix(sudokuMap);
     bool answer = solveSudoku(sudokuMap, possibleNumbers);
     if(answer){
-        cout << "Sudoku has been solved! \n";
+        cout << "Sudoku has been solved! \n\n";
     } else {
-        cout << "Sudoku hasn't been solved! \n";
+        cout << "Sudoku hasn't been solved! \n\n";
     }
-    
-    cout << "-------------------\n\n";
-    //printMatrix(sudokuMap);
+
+    printMatrix(sudokuMap);
     return 0;
 }
