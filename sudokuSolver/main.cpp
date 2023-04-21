@@ -7,22 +7,44 @@
 
 #include <iostream>
 #include <vector>
-#include <list>
 #include <algorithm>
 #include <set>
+#include<chrono>
 using namespace std;
 
 vector<vector<int>> sudokuMap = {
-    {9, 0, 0, 0, 0, 0, 0, 0, 5},
-    {0, 6, 0, 0, 7, 0, 0, 0, 0},
-    {0, 0, 2, 0, 0, 8, 4, 9, 0},
-    {0, 0, 0, 0, 0, 0, 0, 1, 0},
-    {0, 0, 9, 0, 0, 4, 3, 8, 0},
-    {2, 0, 0, 9, 0, 0, 0, 0, 0},
-    {0, 0, 3, 0, 0, 0, 0, 0, 1},
-    {7, 0, 0, 0, 8, 0, 5, 3, 0},
-    {0, 0, 0, 0, 0, 5, 0, 0, 2},
+    {7, 2, 0, 0, 0, 0, 0, 0, 6},
+    {9, 5, 0, 0, 1, 4, 8, 3, 7},
+    {8, 4, 0, 7, 9, 6, 1, 2, 0},
+    {1, 0, 0, 0, 0, 0, 0, 0, 3},
+    {0, 0, 4, 5, 7, 0, 0, 8, 0},
+    {6, 0, 8, 0, 2, 1, 0, 0, 0},
+    {0, 0, 0, 1, 6, 0, 3, 0, 4},
+    {4, 0, 0, 0, 0, 0, 5, 1, 0},
+    {0, 0, 7, 0, 0, 5, 0, 0, 0},
 };
+
+const bool debug = false;
+
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+//{0, 0, 0, 0, 0, 0, 0, 0, 0},
+
+//{8, 0, 9, 4, 0, 7, 0, 0, 1},
+//{0, 0, 0, 0, 3, 0, 0, 7, 0},
+//{4, 0, 0, 0, 8, 0, 0, 0, 0},
+//{5, 0, 0, 1, 0, 4, 0, 2, 0},
+//{0, 0, 3, 0, 0, 0, 5, 0, 0},
+//{0, 0, 0, 8, 0, 0, 0, 0, 0},
+//{3, 0, 0, 5, 0, 2, 0, 1, 0},
+//{0, 0, 0, 0, 7, 0, 0, 0, 0},
+//{0, 6, 0, 0, 0, 0, 0, 0, 9},
 
 const vector<pair<int,int>> centersOfsquares = {{1,1},{1,4},{1,7},{4,1},{4,4},{4,7},{7,1},{7,4},{7,7}};
 
@@ -138,7 +160,7 @@ set<int> findPossibleNumbers(vector<vector<int>> sudokuMap, pair<int,int> pos){
 
 
 //adding number to the sudoku map
-void updateSukokuMap(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<int>>> possibleNumbers){
+void updateSukokuMap(vector<vector<int>> &sudokuMap, vector<pair<pair<int,int>, set<int>>> possibleNumbers){
     for (pair<pair<int,int>, set<int> > val : possibleNumbers) {
         if(val.second.size() == 1){
             sudokuMap[val.first.first][val.first.second] = *val.second.begin();
@@ -177,7 +199,7 @@ bool isSudokuValid(const vector<vector<int>> &sudokuMap) {
     return true;
 }
 
-bool nothingChanged(list<pair<pair<int,int>, set<int> >> list1, list<pair<pair<int,int>, set<int> >> list2){
+bool nothingChanged(vector<pair<pair<int,int>, set<int> >> list1, vector<pair<pair<int,int>, set<int> >> list2){
     if(list1.size() != list2.size()){
         return false;
     }
@@ -206,55 +228,86 @@ bool zeros(vector<vector<int>> sudokuMap){
     return false;
 }
 
-bool solveSudoku(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<int> >> possibleNumbers){
-    list<pair<pair<int,int>, set<int> >> tempPossibleNumbers;
+
+
+bool solveSudoku(vector<vector<int>> &sudokuMap, vector<pair<pair<int,int>, set<int> >> possibleNumbers){
+    vector<pair<pair<int,int>, set<int> >> tempPossibleNumbers;
     
     
     for (int i = 0; i < sudokuMap.size(); i++) {
        for (int j = 0; j < sudokuMap[0].size(); j++) {
            if(sudokuMap[i][j] == 0){
-               tempPossibleNumbers.push_front( { {i,j}, findPossibleNumbers(sudokuMap, {i,j}) } );
+               set<int> posNumList = findPossibleNumbers(sudokuMap, {i,j});
+               
+               //all tempPossibleNumbers' sets must be sorted by size
+               bool itsBig = true;
+               for (auto it = tempPossibleNumbers.begin(); it != tempPossibleNumbers.end(); ++it) {
+                   if (posNumList.size() <=  it->second.size()) {
+                       tempPossibleNumbers.insert(it, {{i, j}, posNumList});
+                       itsBig = false;
+                       break;
+                   }
+                   
+               }
+               if(itsBig){
+                   tempPossibleNumbers.push_back( { {i,j}, posNumList } );
+               }
            }
        }
     }
+    
+    if(debug){
+        cout << endl << "-------Possible numbers--------" << endl;
+        for (const auto &item : tempPossibleNumbers) {
+            const auto &coordinates = item.first;
+            const auto &numbers = item.second;
+
+            std::cout << "[" << coordinates.first << "," << coordinates.second << "]: ";
+
+            for (auto it = numbers.begin(); it != numbers.end(); ++it) {
+                if (it != numbers.begin()) {
+                    std::cout << ",";
+                }
+                std::cout << *it;
+            }
+            std::cout << std::endl;
+        }
+    }
+    
     // судоку уже решена?
     if(tempPossibleNumbers.empty()){
         return true;
     }
     
-    if (nothingChanged(tempPossibleNumbers, possibleNumbers)) {
-        bool foundSolution = false;
-        for (pair<pair<int,int>, set<int> > val : tempPossibleNumbers) {
-            for(auto it = val.second.begin(); it != val.second.end(); it++){
-                auto number = *it;
-                vector<vector<int>> previousState = sudokuMap;
-                sudokuMap[val.first.first][val.first.second] = number;
-                bool solved = solveSudoku(sudokuMap, tempPossibleNumbers);
-                if (solved) {
-                    foundSolution = true;
-                    break;
-                } else {
-                    sudokuMap = previousState;
-                }
-            }
-            if (foundSolution) {
-                break;
-            }
-        }
-        return foundSolution;
-    }
+//    if (nothingChanged(tempPossibleNumbers, possibleNumbers)) {
+//        bool foundSolution = false;
+//        for (pair<pair<int,int>, set<int> > val : tempPossibleNumbers) {
+//
+//            for(auto it = val.second.begin(); it != val.second.end(); it++){
+//                auto number = *it;
+//                vector<vector<int>> previousState = sudokuMap;
+//                sudokuMap[val.first.first][val.first.second] = number;
+//                bool solved = solveSudoku(sudokuMap, tempPossibleNumbers);
+//                if (solved) {
+//                    foundSolution = true;
+//                    break;
+//                } else {
+//                    sudokuMap = previousState;
+//                }
+//            }
+//            if (foundSolution) {
+//                break;
+//            }
+//        }
+//        return foundSolution;
+//    }
     
     
-//    cout << "--------------до updateSukokuMap------------" << endl;
-    //printMatrix(sudokuMap);
-//    cout << "__________________________" << endl;
     updateSukokuMap(sudokuMap, tempPossibleNumbers);
     if(!isSudokuValid(sudokuMap)){
         return false;
     }
-//    cout << "---------- после updateSukokuMap----------------" << endl;
-//    printMatrix(sudokuMap);
-//    cout << "__________________________" << endl;
+
     
     return solveSudoku(sudokuMap, tempPossibleNumbers);
     
@@ -262,15 +315,26 @@ bool solveSudoku(vector<vector<int>> &sudokuMap, list<pair<pair<int,int>, set<in
 
 
 int main(int argc, const char * argv[]) {
-    list<pair<pair<int,int>, set<int> >> possibleNumbers;
+    vector<pair<pair<int,int>, set<int> >> possibleNumbers;
+    
     printMatrix(sudokuMap);
+    auto start = std::chrono::high_resolution_clock::now();
     bool answer = solveSudoku(sudokuMap, possibleNumbers);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(stop - start);
+    
     if(answer){
         cout << "Sudoku has been solved! \n\n";
     } else {
         cout << "Sudoku hasn't been solved! \n\n";
     }
+    
+    cout << "TIME ELAPSED (nanoseconds) "<< duration.count() << endl;
 
     printMatrix(sudokuMap);
     return 0;
+    //11278792
+    //11081250
 }
+
+
